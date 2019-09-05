@@ -1,0 +1,22 @@
+<p><b>Description: </b>Recessive module filters for such variants where the parents are heterozygous carriers (Phenotype=3) for the variant and the affected individual (Phenotype=2) has a homozygous state and unaffected individual (Phenotype=1) is reference for the alternate allele. Ideally, recessive module requires the genomes of both the parents to infer recessively inherited variants. However, in the absence of one of the parents the module still infers the possible recessively inherited variants based on the single parent genotypes.</p>
+
+<b>Parameters: </b>
+<p><b>Maximum number of cases allowed to have missing genotype: </b>The user can chose the number of affected individuals that can have missing genotype.</p>
+<p><b>Maximum MAF in controls: </b>Inaddition, the user can relax the criteria by allowing the variant to be present in controls by providing maximum minor allele frequency of the variants in the control cohort.</p>
+
+
+<b>Required columns in PED file:</b><br>
+<p><b>IndividualID</b> and <b>Phenotype</b> columns are required in pedigree analysis and case-control modules.</p>
+
+<b>Phenotype coding:</b><br>
+0 exclude from the analysis<br>
+1 unaffected parent or off-spring or other unaffected individuals (controls)<br>
+2 affected off-spring (cases)<br>
+3 affected or carrier parent<br></p>
+
+
+
+
+
+
+

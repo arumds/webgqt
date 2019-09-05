@@ -1,0 +1,40 @@
+<p>By default 1000G phase 3 ped file is selected where individuals HG00096,HG00097 are cases, HG00099 is carrier and the remaining samples as controls for the demo. The PED file can be downloaded from the home page for the user to alter the Phenotypes of the individuals and perform querying on 1000G phase3 data.</p>
+
+<b>Instructions for preparing custom PED file</b>
+
+<p>webGQT requires a phenotype file in PED format that that describes the samples in the target VCF/BCF file.
+The ped file must contain tab separated fields of IndividualID,Phenotype,Gender,Population
+to perform pedigree analysis, case-control studies and population comparisons.</p>
+
+<b>Example PED format:</b></br>
+<p>IndividualID   Population  Gender   Phenotype<br>
+HG00096	GBR	1	2<br>
+HG00097	GBR	2	2<br>
+HG00099	GBR	2	3<br>
+HG00100	GBR	2	1<br>
+HG00101	GBR	1	1<br>
+HG00102	GBR	2	0<br></p>
+
+<b>Phenotype coding:</b><br>
+0 exclude from the analysis<br>
+1 unaffected parent or off-spring or other unaffected individuals (controls)<br>
+2 affected off-spring (cases)<br>
+3 affected or carrier parent<br></p>
+
+<b>Gender coding:</b><br>
+
+<p>Gender could be coded as male/female or 1 for males and 2 for females. Gender could be NA if unavailable.</p>
+
+<b>Required columns for pedigree analysis and case-control analysis modules:</b><br>
+
+<p>IndividualID and Phenotype columns are required to perform pedigree and case-control analysis</p>
+
+<b>Required columns for population analysis module:</b><br>
+
+<p>IndividualID, Population and Gender are required in the PED file to perform population based variant filtering,
+and can have optional columns like Phenotype etc. IndividualID, Population and Gender information in the input PED file
+is dynamically populated in the population analysis module parameters.</p>
+
+
+
+

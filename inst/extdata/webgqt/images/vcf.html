@@ -1,0 +1,14 @@
+<p>To perform analysis on user specific data, the VCF/BCF file must be indexed by GQT tools. Below are the two steps to create GQT indexed files:</p>
+
+<p><b>bcftools index your_file.vcf.gz</b> <br>
+<b>gqt/bin/gqt convert bcf -i your_file.vcf.gz</b></p>
+
+<p>The indexing can be performed either on VCF or BCF file. Then provide GQT created indexed files as input to the webGQT by clicking <b> Browse </b> tab.</p>
+
+<p><b>Required input files:</b><br>
+your_file.bcf<br>
+your_file.bcf.gqt<br>
+your_file.bcf.bim<br>
+your_file.bcf.vid</p>
+
+
