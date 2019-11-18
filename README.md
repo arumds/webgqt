@@ -174,6 +174,6 @@ sudo systemctl restart nginx
 sudo systemctl restart shiny-server
 ```
 
-Now the shiny server should be serving hhtps requests on the domain example.com/webgqt by redirecting to https://example.com/webgqt
+Now the shiny server should be serving https requests on the domain example.com/webgqt by redirecting to https://example.com/webgqt
 
 
