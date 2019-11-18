@@ -48,7 +48,8 @@ sidebar <- dashboardSidebar(
       "Pedigree analysis",
       tabName = "pedigree_module",
       menuSubItem("Dominant", tabName = "dominantModel"),
-      menuSubItem("Recessive", tabName = "recessiveModel"),
+      menuSubItem("Homozygous Recessive", tabName = "recessiveModel"),
+      menuSubItem("Compound Heterozygous", tabName = "compoundHetModel"),
       menuSubItem("Recessive De novo", tabName = "recdenovoModel"),
       menuSubItem("Dominant De novo", tabName = "domdenovoModel")
     ),
@@ -406,9 +407,79 @@ bodyDom <- tabItem(tabName = "dominantModel",
                      )
                    ))
 
+bodyCompHet <- tabItem(tabName = "compoundHetModel",
+                   h2("Compound Heterozygous"),
+                   fluidRow(
+                     box(
+                       width = 7,
+                       status = "info",
+                       tabsetPanel(
+                         id = "compHet_tab",
+                         tabPanel(
+                           "Parameters",
+                           numericInput(
+                             "compHetCases",
+                             label = "Maximum number of cases allowed to have missing genotype",
+                             value = 0,
+                             max = 10
+                           ),
+                           numericInput(
+                             "compHetMAF",
+                             label = "Maximum MAF in controls",
+                             value = 0,
+                             min = 0,
+                             max = 1,
+                             step = 0.1
+                           ),
+                           actionButton("comp_run", "Filter"),
+                           actionButton("comp_cancel", "Cancel")
+                           #actionButton("dom_status", "Check Status")
+                         ),
+                         
+                         tabPanel(
+                           "Results",
+                           value = "compHet_results",
+                           navbarPage(
+                             NULL,
+                             tabPanel(
+                               "Summary",
+                               textOutput("compHet_count"),
+                               tabPanel("Summary", tableOutput("compHet_summary"), icon = icon("list-alt"))
+                             ),
+                             tabPanel(
+                               "Table",
+                               DT::dataTableOutput("compHet_table"),
+                               icon = icon("table"),
+                               downloadButton("compHet_downList", "Download Table"),
+                               downloadButton("compHet_VCFdownList", "Download VCF")
+                             ),
+                             tabPanel(
+                               "Plot",
+                               plotOutput("compHet_plot"),
+                               icon = icon("bar-chart-o"),
+                               downloadButton("comp_downPlot", "Download Plot")
+                             )
+                           )
+                           
+                         )
+                       )
+                     ),
+                     
+                     box(
+                       #title = "Description",
+                       width = 5,
+                       status = "info",
+                       includeHTML(
+                         system.file('extdata', "webgqt/www/compHet.html", package = "webGQT")
+                       )
+                       # img(src = 'imageFol/dominant-human.png', align = "center", width =
+                       #       "100%")
+                       #tabBox(id = "dom_infobox", height = "100%", width = "100%")
+                     )
+                   ))
 
 bodyRec <- tabItem(tabName = "recessiveModel",
-                   h2("Recessive"),
+                   h2("Homozygous Recessive"),
                    fluidRow(
                      box(
                        width = 7,
@@ -1126,6 +1197,7 @@ ui <- shinyUI(dashboardPage(
       bodyVCF,
       bodyPED,
       bodyRec,
+      bodyCompHet,
       bodyDom,
       bodyRecDenovo,
       bodyDomDenovo,
@@ -1456,14 +1528,9 @@ server <- function(input, output, session) {
   
   
   ####create PED sample DB once per user session######
-  # ped_db <- reactive({
-  #   if (input$ped_rd == "Case study") {
-  #     peddb_default <- file.path("/mnt/data/pheno.ped.db")
-  #   }
-  #   else if (input$ped_rd == "1000 Genomes") {
       peddb_default <- system.file("extdata", "webgqt/data/1K.phase3.ped.db", package = "webGQT")
-  #   }
-  # })
+
+
   
   
   peddb_content <- reactiveVal()
@@ -1547,9 +1614,9 @@ server <- function(input, output, session) {
           "-p \"Phenotype=2\"",
           paste0('-g \"count(UNKNOWN)<=', domCases_value, '\"'),
           "-p \"Phenotype=2\"",
-          "-g \"HET\"",
-          "-p \"Phenotype=3\"",
-          paste0('-g \"count(HET) ==', dom_ped_nCar$ncarriers, '\"'),
+          "-g \"HET HOM_ALT\"",
+          # "-p \"Phenotype=3\"",
+          # paste0('-g \"count(HET) ==', dom_ped_nCar$ncarriers, '\"'),
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', domMAF_value, '\"'),
           ">",
@@ -1945,6 +2012,228 @@ server <- function(input, output, session) {
     stopMulticoreFuture(fut2)
   })
   
+  ############################Compound Heterogyzous variant module##############################################
+  compHet_content <- reactiveVal()
+  
+  observeEvent(input$comp_run, {
+    shinyjs::disable(input$comp_run)
+    prog <- Progress$new(session)
+    prog$set(message = "Filtering compound heterozygous variants",
+             detail = "Please do not refresh,This may take a while...",
+             value = NULL)
+    fut3 <- NULL
+    
+    compHet_files <- gqt_list()
+    compHet_ped <- ped_file()
+    if (input$ped_rd == "1000 Genomes") {
+      compHet_peddb <- peddb_default
+    }
+    else if (input$ped_rd == "Upload PED" && input$compHet_run) {
+      compHet_peddb <- peddb_content()
+    }
+    
+    compHetCases <- reactive({
+      return(input$compHetCases)
+    })
+    compHetMAF <- reactive({
+      return(input$compHetMAF)
+    })
+    
+    compHetCases_value <- compHetCases()
+    compHetMAF_value <- compHetMAF()
+    #compHet_ped_nCar <- ped_read()
+    
+    fut3 <<- future({
+      system(
+        paste(
+          gqt_path,
+          'query -i',
+          compHet_files$gz_new,
+          '-v -d',
+          compHet_peddb,
+          "-p \"Phenotype=2\"",
+          paste0('-g \"count(UNKNOWN)<=', compHetCases_value, '\"'),
+          "-p \"Phenotype=2\"",
+          "-g \"HET\"",
+          "-p \"Phenotype=3\"",
+          paste0('-g \"count(HET) ==1\"'),
+          "-p \"Phenotype=3\"",
+          paste0('-g \"count(HOM_REF) ==1\"'),
+          "-p \"Phenotype=1\"",
+          paste0('-g \"maf()<=', compHetMAF_value, '\"'),
+          ">",
+          paste0(tmp_dir, "/compHet.vcf.gz", sep = "")
+        )
+      )
+      compHet_vcf <- vcfR::read.vcfR(paste0(tmp_dir, "/compHet.vcf.gz"))
+      compHet_vcf
+    }) %...>%
+      compHet_content() %>%
+      finally( ~ prog$close())
+    
+    # Return something other than the promise so shiny remains responsive
+    NULL
+  })
+  
+  #####Split VCF to table##########################
+  observeEvent(req(compHet_content()),
+               {
+                 #shinyjs::enable(id = compHet_run)
+                 updateTabsetPanel(session, "compHet_tab", "compHet_results")
+                 compHet_vcfinput <- compHet_content()
+                 compHet_pedinfo <- ped_read()
+                 compHet_vcf_gt <-
+                   compHet_vcfinput@gt[, grep(compHet_pedinfo$regex_cases_carriers_names,
+                                              colnames(compHet_vcfinput@gt))]
+                 compHet_vcf_info <- vcfR::vcfR2tidy(compHet_vcfinput)$fix
+                 compHet_vcf_info <-
+                   compHet_vcf_info[, c(2:ncol(compHet_vcf_info))]
+                 compHet_gt_info <- cbind(compHet_vcf_gt, compHet_vcf_info)
+                 
+                 output$compHet_table <-
+                   DT::renderDataTable(DT::datatable(
+                     compHet_gt_info,
+                     options = list(
+                       searching = TRUE,
+                       pageLength = 10,
+                       rownames(NULL),
+                       scrollX = T
+                     )
+                   ))
+                 
+                 #####summarize by ANNOVAR and snpEff annotation flags if exists in input VCF#####
+                 compHet_gene_summary <- function() {
+                   annot_levels = c(
+                     "Annotation",
+                     "Func.ensGene",
+                     "Func.genericGene",
+                     "Func.refGene",
+                     "Func.FEELncGene"
+                   )
+                   if ((nrow(compHet_gt_info) != 0) &&
+                       length(annot_levels[which(annot_levels %in% names(compHet_gt_info))]) >= 1)
+                   {
+                     annot_levels = annot_levels[which(annot_levels %in% names(compHet_gt_info))]
+                     
+                     compHet_out_gene_table <-
+                       as.data.frame.matrix(xtabs(~ values + ind,
+                                                  stack(compHet_gt_info, select = annot_levels)))
+                     compHet_out_gene_table_fix <-
+                       setDT(compHet_out_gene_table, keep.rownames = TRUE)
+                     colnames(compHet_out_gene_table_fix)[1] <- "Region"
+                     return(compHet_out_gene_table_fix)
+                   }
+                   else if ((nrow(compHet_gt_info) != 0) &
+                            length(annot_levels[which(annot_levels %in% names(compHet_gt_info))]) == 0)
+                   {
+                     compHet_out_gene_table_fix <- data.frame()
+                     return(compHet_out_gene_table_fix)
+                   }
+                   else if ((nrow(compHet_gt_info) == 0) |
+                            length(annot_levels[which(annot_levels %in% names(compHet_gt_info))]) ==
+                            0)
+                   {
+                     compHet_out_gene_table_fix <- data.frame()
+                     return(compHet_out_gene_table_fix)
+                   }
+                 }
+                 
+                 ######code to print count and summary table in 'Summary'pane###########
+                 
+                 output$compHet_count <-
+                   renderText(paste("Total filtered variants:", nrow(unique(compHet_gt_info[c("CHROM", "POS")]))))
+                 
+                 
+                 output$compHet_summary <-
+                   renderTable(
+                     compHet_gene_summary(),
+                     rownames = TRUE,
+                     hover = TRUE,
+                     striped = TRUE
+                   )
+                 
+                 ###### code to plot variant summary#############
+                 compHet_plot <- function() {
+                   if (nrow(compHet_gene_summary()) > 1) {
+                     compHetGenePlot <- compHet_gene_summary()
+                     dfm <-
+                       melt(compHetGenePlot,
+                            varnames = c(colnames(compHetGenePlot)),
+                            id.vars = 1)
+                     ggplot(dfm, aes(x = Region, y = value)) + geom_bar(aes(fill = variable),
+                                                                        stat = "identity",
+                                                                        position = "dodge") +
+                       theme_bw() + theme(
+                         panel.border = element_blank(),
+                         panel.grid.major = element_blank(),
+                         panel.grid.minor = element_blank()
+                       ) +
+                       xlab("Functional category") + ylab("Variant count") +
+                       guides(fill = guide_legend(title = "Gene Database")) +
+                       theme(
+                         axis.text = element_text(size = 12, face = "bold"),
+                         axis.title = element_text(size = 14, face = "bold"),
+                         axis.text.x = element_text(angle = 90, hjust = 1)
+                       )
+                   }
+                   else if (nrow(compHet_gene_summary()) <= 1) {
+                     Variants <- 0
+                     hist(
+                       Variants,
+                       xlab = "Functional category",
+                       ylab = ("Variant count"),
+                       main = NULL,
+                       labels = FALSE
+                     )
+                   }
+                 }
+                 
+                 
+                 #####code to render and download png,txt and VCF output files########
+                 
+                 output$compHet_plot <- renderPlot({
+                   compHet_plot()
+                 })
+                 
+                 output$compHet_downPlot <- downloadHandler(
+                   filename = function() {
+                     paste("output", '.png', sep = '')
+                   },
+                   content = function(file) {
+                     ggsave(file, compHet_plot())
+                   }
+                 )
+                 
+                 output$compHet_downList <- downloadHandler(
+                   filename = function() {
+                     paste0("output", ".txt")
+                   },
+                   content = function(file) {
+                     write.table(
+                       compHet_gt_info,
+                       file,
+                       row.names = FALSE,
+                       sep = "\t",
+                       quote = FALSE
+                     )
+                   }
+                 )
+                 
+                 output$compHet_VCFdownList <- downloadHandler(
+                   filename = function() {
+                     paste0("output", ".vcf")
+                   },
+                   content = function(file) {
+                     write.vcf(compHet_vcfinput, file)
+                   }
+                 )
+               })
+  
+  observeEvent(input$compHet_cancel, {
+    stopMulticoreFuture(fut3)
+  })
+  
+  
   
   
   ###############################Dominant de novo module##############################################
@@ -1956,7 +2245,7 @@ server <- function(input, output, session) {
     prog$set(message = "Dominant de novo Analysis in progress",
              detail = "Please do not refresh, This may take a while...",
              value = NULL)
-    fut3 <- NULL
+    fut4 <- NULL
     
     domDenovo_files <- gqt_list()
     domDenovo_ped <- ped_file()
@@ -1979,7 +2268,7 @@ server <- function(input, output, session) {
     domDenovoMAF_value <- domDenovoMAF()
     domDenovo_ped_nCar <- ped_read()
     
-    fut3 <<- future({
+    fut4 <<- future({
       system(
         paste(
           gqt_path,
@@ -1991,12 +2280,12 @@ server <- function(input, output, session) {
           paste0('-g \"count(UNKNOWN)<=', domDenovoCases_value, '\"'),
           "-p \"Phenotype=2\"",
           "-g \"HET\"",
-          "-p \"Phenotype=3\"",
-          paste0(
-            '-g \"count(HOM_REF) ==',
-            domDenovo_ped_nCar$ncarriers,
-            '\"'
-          ),
+          # "-p \"Phenotype=3\"",
+          # paste0(
+          #   '-g \"count(HOM_REF) ==',
+          #   domDenovo_ped_nCar$ncarriers,
+          #   '\"'
+          # ),
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', domDenovoMAF_value, '\"'),
           ">",
@@ -2004,7 +2293,7 @@ server <- function(input, output, session) {
         )
       )
       dom_denovo_vcf <-
-        vcfR::read.vcfR(paste0(tmp_dir, "/dom.vcf.gz"))
+        vcfR::read.vcfR(paste0(tmp_dir, "/dom.denovo.vcf.gz"))
       dom_denovo_vcf
     }) %...>%
       dom_denovo_content() %>%
@@ -2177,7 +2466,7 @@ server <- function(input, output, session) {
                })
   
   observeEvent(input$dom_denovo_cancel, {
-    stopMulticoreFuture(fut3)
+    stopMulticoreFuture(fut4)
   })
   
   ###############################recessive de novo module##############################################
@@ -2186,10 +2475,10 @@ server <- function(input, output, session) {
   observeEvent(input$rec_denovo_run, {
     shinyjs::disable(input$rec_denovo_run)
     prog <- Progress$new(session)
-    prog$set(message = "recinant de novo Analysis in progress",
+    prog$set(message = "Recessive de novo Analysis in progress",
              detail = "Please do not refresh, This may take a while...",
              value = NULL)
-    fut4 <- NULL
+    fut5 <- NULL
     
     recDenovo_files <- gqt_list()
     recDenovo_ped <- ped_file()
@@ -2212,7 +2501,7 @@ server <- function(input, output, session) {
     recDenovoMAF_value <- recDenovoMAF()
     recDenovo_ped_nCar <- ped_read()
     
-    fut4 <<- future({
+    fut5 <<- future({
       system(
         paste(
           gqt_path,
@@ -2239,7 +2528,7 @@ server <- function(input, output, session) {
         )
       )
       rec_denovo_vcf <-
-        vcfR::read.vcfR(paste0(tmp_dir, "/rec.vcf.gz"))
+        vcfR::read.vcfR(paste0(tmp_dir, "/rec.denovo.vcf.gz"))
       rec_denovo_vcf
     }) %...>%
       rec_denovo_content() %>%
@@ -2412,7 +2701,7 @@ server <- function(input, output, session) {
                })
   
   observeEvent(input$rec_denovo_cancel, {
-    stopMulticoreFuture(fut4)
+    stopMulticoreFuture(fut5)
   })
   
   
@@ -2425,7 +2714,7 @@ server <- function(input, output, session) {
     prog$set(message = "Case-specific analysis in progress",
              detail = "Please do not refresh,This may take a while...",
              value = NULL)
-    fut5 <- NULL
+    fut6 <- NULL
     
     cs_files <- gqt_list()
     cs_ped <- ped_file()
@@ -2446,7 +2735,7 @@ server <- function(input, output, session) {
     cs_missing_cases_value <- cs_missing_cases()
     case_specific_vartype_value <- case_specific_vartype()
     
-    fut5 <<- future({
+    fut6 <<- future({
       system(
         paste(
           gqt_path,
@@ -2643,7 +2932,7 @@ server <- function(input, output, session) {
                })
   
   observeEvent(input$case_specific_cancel, {
-    stopMulticoreFuture(fut5)
+    stopMulticoreFuture(fut6)
   })
   
   
@@ -2656,7 +2945,7 @@ server <- function(input, output, session) {
     prog$set(message = "Cases shared analysis in progress",
              detail = "Please do not refresh,This may take a while...",
              value = NULL)
-    fut6 <- NULL
+    fut7 <- NULL
     
     shared_files <- gqt_list()
     shared_ped <- ped_file()
@@ -2681,7 +2970,7 @@ server <- function(input, output, session) {
     case_shared_count_value <- case_shared_count()
     sharedMAF_value <- sharedMAF()
     
-    fut6 <<- future({
+    fut7 <<- future({
       system(
         paste(
           gqt_path,
@@ -2877,7 +3166,7 @@ server <- function(input, output, session) {
                })
   
   observeEvent(input$case_shared_cancel, {
-    stopMulticoreFuture(fut6)
+    stopMulticoreFuture(fut7)
   })
   
   ####################population filter by individual count module################
@@ -2888,7 +3177,7 @@ server <- function(input, output, session) {
     prog$set(message = "Population analysis by individual count in progress",
              detail = "Please do not refresh,This may take a while...",
              value = NULL)
-    fut7 <- NULL
+    fut8 <- NULL
     
     popcount_files <- gqt_list()
     popcount_ped <- ped_file()
@@ -2927,7 +3216,7 @@ server <- function(input, output, session) {
     pop1count_min_value <- pop1count_min()
     pop2count_max_value <- pop2count_max()
     
-    fut7 <<- future({
+    fut8 <<- future({
       system(
         paste(
           gqt_path,
@@ -3144,7 +3433,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$popcount_cancel, {
-    stopMulticoreFuture(fut7)
+    stopMulticoreFuture(fut8)
   })
   
   
@@ -3157,7 +3446,7 @@ server <- function(input, output, session) {
     prog$set(message = "Population analysis by MAF filter in progress",
              detail = "Please do not refresh,This may take a while...",
              value = NULL)
-    fut8 <- NULL
+    fut9 <- NULL
     
     pop_files <- gqt_list()
     pop_ped <- ped_file()
@@ -3195,7 +3484,7 @@ server <- function(input, output, session) {
     pop1_min_MAF_value <- pop1_min_MAF()
     pop2_max_MAF_value <- pop2_max_MAF()
     
-    fut8 <<- future({
+    fut9 <<- future({
       system(
         paste(
           gqt_path,
@@ -3381,7 +3670,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$pop_cancel, {
-    stopMulticoreFuture(fut8)
+    stopMulticoreFuture(fut9)
   })
   
   ####################sample filter module################
@@ -3393,7 +3682,7 @@ server <- function(input, output, session) {
     prog$set(message = "Sample based analysis in progress",
              detail = "Please do not refresh,This may take a while...",
              value = NULL)
-    fut9 <- NULL
+    fut10 <- NULL
     
     sample_files <- gqt_list()
     sample_ped <- ped_file()
@@ -3415,7 +3704,7 @@ server <- function(input, output, session) {
     sample_vartype_value <- sample_vartype()
     sample_min_count_value <- sample_min_count()
     sample_ID <- sample_names()$sampleID
-    fut9 <<- future({
+    fut10 <<- future({
       system(
         paste(
           gqt_path,
@@ -3612,7 +3901,7 @@ server <- function(input, output, session) {
                })
   
   observeEvent(input$sample_cancel, {
-    stopMulticoreFuture(fut9)
+    stopMulticoreFuture(fut10)
   })
 
   #####variant count module############
@@ -3624,7 +3913,7 @@ server <- function(input, output, session) {
                  prog$set(message = "Variant count analysis in progress",
                           detail = "Do not refresh the page,this may take a while...",
                           value = NULL)
-                 fut8 <- NULL
+                 fut11 <- NULL
 
                  variant_files <- gqt_list()
                  variant_ped <- ped_file()
@@ -3643,7 +3932,7 @@ server <- function(input, output, session) {
                  count_vartype_value <- count_vartype()
                  variant_ID <- input$names
 
-                 fut8 <<- future({
+                 fut11 <<- future({
                    system(
                      paste(
                        gqt_path,
