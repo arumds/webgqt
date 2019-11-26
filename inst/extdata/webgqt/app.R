@@ -1227,7 +1227,7 @@ server <- function(input, output, session) {
   tmp_dir <- tempdir()
   setwd(tmp_dir)
   
-  ##########################
+  ##########################deploy webgqt using a specific dataset#################
   gqt_list <- reactive({
     if (input$dataset_rd == "1000 Genomes") {
       gz_file  <-
