@@ -1,4 +1,4 @@
-<p><b>Description: </b>Recessive module filters for such variants where the parents are heterozygous carriers (Phenotype=3) for the variant and the affected individual (Phenotype=2) has a homozygous state and unaffected individual (Phenotype=1) is reference for the alternate allele. Ideally, recessive module requires the genomes of both the parents to infer recessively inherited variants. However, in the absence of one of the parents the module still infers the possible recessively inherited variants based on the single parent genotypes.</p>
+<p><b>Description: </b> This module filters for compound heterozygous variants at single variant level to provide potential compound heterozygous variants for further downstream analysis at gene level. This filters for such variants where the affected individual (Phenotype=2) is heterozygous for the variant and also one parent is heterozygous while the other parent is wild type for the variant. Both the parents should be coded as Phenotype=3 in this module.  This module fits only when the genetype data is available for the off-spring and both the parents.The individuals in the control group (Phenotype =1) can be used to filter out common variants.</p>
 
 <b>Parameters: </b>
 <p><b>Maximum number of cases allowed to have missing genotype: </b>The user can chose the number of affected individuals that can have missing genotype.</p>
@@ -11,7 +11,7 @@
 <b>Phenotype coding:</b><br>
 0 : exclude from the analysis<br>
 1 : unaffected individuals (controls)<br>
-2 : affected off-spring (cases)<br>
+2 : affected off-springs (cases)<br>
 3 : parents <br></p>
 
 

@@ -514,6 +514,7 @@ bodyRec <- tabItem(tabName = "recessiveModel",
                              NULL,
                              tabPanel(
                                "Summary",
+                               verbatimTextOutput("recVText"),
                                textOutput("rec_count"),
                                tabPanel("Summary", tableOutput("rec_summary"), icon = icon("list-alt"))
                              ),
@@ -1391,7 +1392,7 @@ server <- function(input, output, session) {
                collapse = "|",
                sep = "$"
              ))
-  
+
     #### code to save the metainfo of affected , unafected samples and the input ped file to a list of variables######
     
     ncarriers <- nrow(ped_input[ped_input$Phenotype == 3, ])
@@ -1403,6 +1404,10 @@ server <- function(input, output, session) {
       )
     ped_metainfo
     
+    # output$recVText <- renderText( 
+    #   
+    #   validate(need(ncarriers >=1, "Require atleast one parent")) 
+    # )                             
   })
   
   #####extract sample IDs given as input in ################
@@ -1614,9 +1619,9 @@ server <- function(input, output, session) {
           "-p \"Phenotype=2\"",
           paste0('-g \"count(UNKNOWN)<=', domCases_value, '\"'),
           "-p \"Phenotype=2\"",
-          "-g \"HET HOM_ALT\"",
-          # "-p \"Phenotype=3\"",
-          # paste0('-g \"count(HET) ==', dom_ped_nCar$ncarriers, '\"'),
+          "-g \"HET\"",
+          "-p \"Phenotype=3\"",
+          "-g \"HET\"",
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', domMAF_value, '\"'),
           ">",
@@ -1823,7 +1828,7 @@ server <- function(input, output, session) {
     recCases_value <- recCases()
     recMAF_value <- recMAF()
     rec_ped_nCar <- ped_read()
-    
+   
     fut2 <<- future({
       system(
         paste(
@@ -2056,9 +2061,9 @@ server <- function(input, output, session) {
           "-p \"Phenotype=2\"",
           "-g \"HET\"",
           "-p \"Phenotype=3\"",
-          paste0('-g \"count(HET) ==1\"'),
+          paste0('-g \"count(HOM_ALT) ==0\"'),
           "-p \"Phenotype=3\"",
-          paste0('-g \"count(HOM_REF) ==1\"'),
+          paste0('-g \"count(HET) ==1\"'),
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', compHetMAF_value, '\"'),
           ">",
@@ -2280,12 +2285,8 @@ server <- function(input, output, session) {
           paste0('-g \"count(UNKNOWN)<=', domDenovoCases_value, '\"'),
           "-p \"Phenotype=2\"",
           "-g \"HET\"",
-          # "-p \"Phenotype=3\"",
-          # paste0(
-          #   '-g \"count(HOM_REF) ==',
-          #   domDenovo_ped_nCar$ncarriers,
-          #   '\"'
-          # ),
+          "-p \"Phenotype=3\"",
+          "-g \"HOM_REF\"",
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', domDenovoMAF_value, '\"'),
           ">",
@@ -2473,6 +2474,7 @@ server <- function(input, output, session) {
   rec_denovo_content <- reactiveVal()
   
   observeEvent(input$rec_denovo_run, {
+    
     shinyjs::disable(input$rec_denovo_run)
     prog <- Progress$new(session)
     prog$set(message = "Recessive de novo Analysis in progress",
@@ -2516,11 +2518,7 @@ server <- function(input, output, session) {
           "-p \"Phenotype=2\"",
           "-g \"HOM_ALT\"",
           "-p \"Phenotype=3\"",
-          paste0(
-            '-g \"count(HOM_REF) ==',
-            recDenovo_ped_nCar$ncarriers,
-            '\"'
-          ),
+          "-g \"HOM_REF\"",
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', recDenovoMAF_value, '\"'),
           ">",

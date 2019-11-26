@@ -1,10 +1,9 @@
-<p>For the 1000G phase 3 demo data, individuals HG00096,HG00097 are chosen as cases/affected (Phenotype=2) and HG00099 as carrier (Phenotype=3) and the remaining samples as controls (Phenotype=1).</p>
+<p>For the 1000G phase 3 demo data, individuals HG00096,HG00097 are randomly assumed as cases/affected (Phenotype=2) and HG00099 as carrier (Phenotype=3) and the remaining samples as controls (Phenotype=1).</p>
 
 <b>Instructions for preparing custom PED file</b>
 
 <p>webGQT requires a phenotype file in PED format that that describes the samples in the target VCF/BCF file.
-The ped file must contain tab separated fields of IndividualID,Phenotype,Gender,Population
-to perform pedigree analysis, case-control studies and population comparisons.</p>
+The ped file must contain tab separated fields of IndividualID,Phenotype for pedigree analysis and case-control studies. In addition, Gender and Population fileds are required to perform population comparisons.</p>
 
 <b>Example PED format:</b></br>
 <p>IndividualID   Population  Gender   Phenotype<br>
@@ -17,9 +16,11 @@ HG00102	GBR	2	0<br></p>
 
 <b>Phenotype coding:</b><br>
 0 : exclude from the analysis<br>
-1 : unaffected individuals (controls)<br>
-2 : affected off-spring (cases) or affected parents<br>
-3 : carrier parents<br></p>
+1 : unaffected individuals  (controls)<br>
+2 : affected off-spring (cases) <br>
+3 : parents* <br></p>
+
+*In the dominant model, only the affected parent is coded as Phenotype=3 and the unaffected parent should be in the control group (Phenotype=1).
 
 <b>Gender coding:</b><br>
 
