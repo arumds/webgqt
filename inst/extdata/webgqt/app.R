@@ -338,6 +338,7 @@ bodyPED <- tabItem(
 
 bodyDom <- tabItem(tabName = "dominantModel",
                    h2("Dominant"),
+                   mainPanel(verbatimTextOutput("domVText")),
                    fluidRow(
                      box(
                        width = 7,
@@ -409,6 +410,7 @@ bodyDom <- tabItem(tabName = "dominantModel",
 
 bodyCompHet <- tabItem(tabName = "compoundHetModel",
                    h2("Compound Heterozygous"),
+                   mainPanel(verbatimTextOutput("compVText")),
                    fluidRow(
                      box(
                        width = 7,
@@ -431,8 +433,8 @@ bodyCompHet <- tabItem(tabName = "compoundHetModel",
                              max = 1,
                              step = 0.1
                            ),
-                           actionButton("comp_run", "Filter"),
-                           actionButton("comp_cancel", "Cancel")
+                           actionButton("compHet_run", "Filter"),
+                           actionButton("compHet_cancel", "Cancel")
                            #actionButton("dom_status", "Check Status")
                          ),
                          
@@ -480,6 +482,7 @@ bodyCompHet <- tabItem(tabName = "compoundHetModel",
 
 bodyRec <- tabItem(tabName = "recessiveModel",
                    h2("Homozygous Recessive"),
+                   mainPanel(verbatimTextOutput("recVText")),
                    fluidRow(
                      box(
                        width = 7,
@@ -514,7 +517,6 @@ bodyRec <- tabItem(tabName = "recessiveModel",
                              NULL,
                              tabPanel(
                                "Summary",
-                               verbatimTextOutput("recVText"),
                                textOutput("rec_count"),
                                tabPanel("Summary", tableOutput("rec_summary"), icon = icon("list-alt"))
                              ),
@@ -553,6 +555,7 @@ bodyRec <- tabItem(tabName = "recessiveModel",
 
 bodyDomDenovo <- tabItem(tabName = "domdenovoModel",
                          h2("Dominant De novo"),
+                         mainPanel(verbatimTextOutput("domdenovoVText")),
                          fluidRow(
                            box(
                              width = 7,
@@ -626,6 +629,7 @@ bodyDomDenovo <- tabItem(tabName = "domdenovoModel",
 
 bodyRecDenovo <- tabItem(tabName = "recdenovoModel",
                          h2("Recessive De novo"),
+                         mainPanel(verbatimTextOutput("recdenovoVText")),
                          fluidRow(
                            box(
                              width = 7,
@@ -1379,7 +1383,32 @@ server <- function(input, output, session) {
       colnames(ped_input) %in% c("Phenotype"),
       "Please provide PED file with Phenotype column"
     ))
+      
+      output$recVText <-
+        renderText({
+          validate(need(ncarriers > 0, "Missing parent in the PED file. This module requires atleast one parent in the group Phenotype=3. Please refer to Help box."))
+        })
+      
+      
+      output$domVText <-
+        renderText({
+          validate(need(ncarriers == 1, "Missing affected parent in the PED file. This module requires only the affected parent in the group Phenotype=3. Please refer to description"))
+        })
     
+      output$compVText <-
+        renderText({
+          validate(need(ncarriers == 2, "This module requires both the parents in the group Phenotype=3. Please refer to Help box."))
+        })
+      
+      output$recdenovoVText <-
+        renderText({
+          validate(need(ncarriers == 2, "This module requires both the parents in the group Phenotype=3. Please refer to Help box."))
+        })
+      
+      output$domdenovoVText <-
+        renderText({
+          validate(need(ncarriers == 2, "This module requires both the parents in the group Phenotype=3. Please refer to Help box."))
+        })
     ####### function to extract the affected and unaffected sample names from the input ped file#######
     ped_cases_carriers <-
       ped_input$IndividualID[ped_input$Phenotype == 2 |
@@ -1404,10 +1433,7 @@ server <- function(input, output, session) {
       )
     ped_metainfo
     
-    # output$recVText <- renderText( 
-    #   
-    #   validate(need(ncarriers >=1, "Require atleast one parent")) 
-    # )                             
+                             
   })
   
   #####extract sample IDs given as input in ################
@@ -1828,7 +1854,7 @@ server <- function(input, output, session) {
     recCases_value <- recCases()
     recMAF_value <- recMAF()
     rec_ped_nCar <- ped_read()
-   
+
     fut2 <<- future({
       system(
         paste(
@@ -1857,6 +1883,7 @@ server <- function(input, output, session) {
     
     # Return something other than the promise so shiny remains responsive
     NULL
+
   })
   
   #####Split VCF to table##########################
@@ -2020,8 +2047,8 @@ server <- function(input, output, session) {
   ############################Compound Heterogyzous variant module##############################################
   compHet_content <- reactiveVal()
   
-  observeEvent(input$comp_run, {
-    shinyjs::disable(input$comp_run)
+  observeEvent(input$compHet_run, {
+    shinyjs::disable(input$compHet_run)
     prog <- Progress$new(session)
     prog$set(message = "Filtering compound heterozygous variants",
              detail = "Please do not refresh,This may take a while...",
@@ -2036,7 +2063,6 @@ server <- function(input, output, session) {
     else if (input$ped_rd == "Upload PED" && input$compHet_run) {
       compHet_peddb <- peddb_content()
     }
-    
     compHetCases <- reactive({
       return(input$compHetCases)
     })
