@@ -178,7 +178,9 @@ Now the shiny server should be serving https requests on the domain example.com/
 **LICENSING**
 
 
+MIT License
 
+Copyright (c) 2019 Meharji Arumilli
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
