@@ -16,7 +16,7 @@ webGQT applications depends on GQT and R.
 # a) Installation on personal computer (Linux/Mac OS)
 
 ```
-devtools::install_github('mehararumilli/webGQT')
+devtools::install_github('arumds/webGQT')
 library(webGQT)
 ```
 
@@ -32,7 +32,7 @@ gqt_path argument requires the path to the gqt binary created by installing GQT 
 ### Step 1: Open R from terminal and install webGQT by the below command:
 
 ```
-devtools::install_github('mehararumilli/webGQT')
+devtools::install_github('arumds/webGQT')
 library(webGQT)
 ```
 
