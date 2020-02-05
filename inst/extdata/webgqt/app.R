@@ -1,3 +1,4 @@
+####load the required libraries########
 require(shiny)
 require(shinyjs)
 require(shinydashboard)
@@ -13,14 +14,20 @@ require(here)
 plan(multiprocess)
 
 appDir <- getwd()
-gqt_path.default <- '/usr/local/gqt/bin/gqt'
-gqt_path <- getShinyOption("gqt_path", gqt_path.default)
+###default gqt path
+gqt_path.default <- '/usr/local/gqt/bin/gqt'  
+
+###set gqt path as shinyoption        
+gqt_path <- getShinyOption("gqt_path", gqt_path.default)    
+
+###set images resource folder used in the app
 addResourcePath('imageFol', system.file('extdata', 'webgqt/images', package = 'webGQT'))
 
 jsResetCode <- "shinyjs.reset = function() {history.go(0)}"
 
 
-# Define UI for application that draws a histogram
+### This is the UI logic for the app
+##Code for dashboard sidebar menu items
 
 sidebar <- dashboardSidebar(
   width = 200,
@@ -72,7 +79,7 @@ sidebar <- dashboardSidebar(
 )
 
 
-
+####code for the body of each menu item defined above########
 
 bodyGuide <- tabItem(tabName = "getStarted",
                      value = "main_panel",
@@ -162,18 +169,6 @@ bodyInfo <- tabItem(
         img(src = 'imageFol/plot.png', align = "center", width = "100%")
       )
     )
-    # box(
-    #   title = "Data",
-    #   solidHeader = TRUE,
-    #   width = 12,
-    #   status = "info",
-    #   HTML(
-    #     "<b> Demo data:</b> <h5> <a href='https://vm1872.kaj.pouta.csc.fi/1000G/1000G.gqt.tar.gz' target='_blank'> Download </a> GQT indexed 1000 Genomes Phase3 data and <a href='https://vm1138.kaj.pouta.csc.fi/data/1K.phase3.ped' target='_blank'> PED </a> file with sample information from the study  <a href='https://www.nature.com/articles/nature15393' target='_blank'> The 1000 Genomes Project Consortium.</a></h5>"
-    #   ),
-    #   HTML(
-    #     "<b> Case-study data:</b> <h5> <a href='https://vm1872.kaj.pouta.csc.fi/1000G/case_study.gqt.tar.gz' target='_blank'> Download </a> GQT indexed VCF and <a href='https://vm1138.kaj.pouta.csc.fi/data/casestudy.ped' target='_blank'> PED </a> file with sample information from the study  <a href='https://onlinelibrary.wiley.com/doi/full/10.1111/age.12746' target='_blank'> A novel KRT71 variant in curly‐coated dogs.</a></h5>"
-    #   )
-    # )
   )
 )
 
@@ -338,7 +333,6 @@ bodyPED <- tabItem(
 
 bodyDom <- tabItem(tabName = "dominantModel",
                    h2("Dominant"),
-                   mainPanel(verbatimTextOutput("domVText")),
                    fluidRow(
                      box(
                        width = 7,
@@ -410,7 +404,6 @@ bodyDom <- tabItem(tabName = "dominantModel",
 
 bodyCompHet <- tabItem(tabName = "compoundHetModel",
                    h2("Compound Heterozygous"),
-                   mainPanel(verbatimTextOutput("compVText")),
                    fluidRow(
                      box(
                        width = 7,
@@ -433,8 +426,8 @@ bodyCompHet <- tabItem(tabName = "compoundHetModel",
                              max = 1,
                              step = 0.1
                            ),
-                           actionButton("compHet_run", "Filter"),
-                           actionButton("compHet_cancel", "Cancel")
+                           actionButton("comp_run", "Filter"),
+                           actionButton("comp_cancel", "Cancel")
                            #actionButton("dom_status", "Check Status")
                          ),
                          
@@ -482,7 +475,6 @@ bodyCompHet <- tabItem(tabName = "compoundHetModel",
 
 bodyRec <- tabItem(tabName = "recessiveModel",
                    h2("Homozygous Recessive"),
-                   mainPanel(verbatimTextOutput("recVText")),
                    fluidRow(
                      box(
                        width = 7,
@@ -555,7 +547,6 @@ bodyRec <- tabItem(tabName = "recessiveModel",
 
 bodyDomDenovo <- tabItem(tabName = "domdenovoModel",
                          h2("Dominant De novo"),
-                         mainPanel(verbatimTextOutput("domdenovoVText")),
                          fluidRow(
                            box(
                              width = 7,
@@ -629,7 +620,6 @@ bodyDomDenovo <- tabItem(tabName = "domdenovoModel",
 
 bodyRecDenovo <- tabItem(tabName = "recdenovoModel",
                          h2("Recessive De novo"),
-                         mainPanel(verbatimTextOutput("recdenovoVText")),
                          fluidRow(
                            box(
                              width = 7,
@@ -1217,7 +1207,7 @@ ui <- shinyUI(dashboardPage(
 
 
 
-# This is the server logic of a Shiny webgqt application. You can run the
+# This is the server logic of a Shiny webgqt application.
 
 
 options(shiny.maxRequestSize = 100000 * 1024 ^ 2)
@@ -1227,7 +1217,8 @@ server <- function(input, output, session) {
   tmp_dir <- tempdir()
   setwd(tmp_dir)
   
-  ############################deploy webgqt using a specific dataset#################
+  ####code to define the path for default gqt index files with system.file######
+  ###the user can set the path of custom dataset here ####
   gqt_list <- reactive({
     if (input$dataset_rd == "1000 Genomes") {
       gz_file  <-
@@ -1264,6 +1255,7 @@ server <- function(input, output, session) {
       file.copy(off_file, off_new)
       file.copy(vid_file, vid_new)
       
+ ######code to assign gqt index files to list of variables######
       gqt_files <-
         list(
           gz_new = gz_new,
@@ -1276,6 +1268,7 @@ server <- function(input, output, session) {
         )
       gqt_files
     }
+    ###code to assign the uploaded GQT index files to a list of variables####
     else if (input$dataset_rd == "Upload VCF")
     {
       req(input$uploadVCF$datapath)
@@ -1383,32 +1376,7 @@ server <- function(input, output, session) {
       colnames(ped_input) %in% c("Phenotype"),
       "Please provide PED file with Phenotype column"
     ))
-      
-      output$recVText <-
-        renderText({
-          validate(need(ncarriers > 0, "Missing parent in the PED file. This module requires atleast one parent in the group Phenotype=3. Please refer to Help box."))
-        })
-      
-      
-      output$domVText <-
-        renderText({
-          validate(need(ncarriers == 1, "Missing affected parent in the PED file. This module requires only the affected parent in the group Phenotype=3. Please refer to description"))
-        })
     
-      output$compVText <-
-        renderText({
-          validate(need(ncarriers == 2, "This module requires both the parents in the group Phenotype=3. Please refer to Help box."))
-        })
-      
-      output$recdenovoVText <-
-        renderText({
-          validate(need(ncarriers == 2, "This module requires both the parents in the group Phenotype=3. Please refer to Help box."))
-        })
-      
-      output$domdenovoVText <-
-        renderText({
-          validate(need(ncarriers == 2, "This module requires both the parents in the group Phenotype=3. Please refer to Help box."))
-        })
     ####### function to extract the affected and unaffected sample names from the input ped file#######
     ped_cases_carriers <-
       ped_input$IndividualID[ped_input$Phenotype == 2 |
@@ -1421,7 +1389,7 @@ server <- function(input, output, session) {
                collapse = "|",
                sep = "$"
              ))
-
+  
     #### code to save the metainfo of affected , unafected samples and the input ped file to a list of variables######
     
     ncarriers <- nrow(ped_input[ped_input$Phenotype == 3, ])
@@ -1433,7 +1401,6 @@ server <- function(input, output, session) {
       )
     ped_metainfo
     
-                             
   })
   
   #####extract sample IDs given as input in ################
@@ -1645,9 +1612,9 @@ server <- function(input, output, session) {
           "-p \"Phenotype=2\"",
           paste0('-g \"count(UNKNOWN)<=', domCases_value, '\"'),
           "-p \"Phenotype=2\"",
-          "-g \"HET\"",
-          "-p \"Phenotype=3\"",
-          "-g \"HET\"",
+          "-g \"HET HOM_ALT\"",
+          # "-p \"Phenotype=3\"",
+          # paste0('-g \"count(HET) ==', dom_ped_nCar$ncarriers, '\"'),
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', domMAF_value, '\"'),
           ">",
@@ -1854,7 +1821,7 @@ server <- function(input, output, session) {
     recCases_value <- recCases()
     recMAF_value <- recMAF()
     rec_ped_nCar <- ped_read()
-
+    
     fut2 <<- future({
       system(
         paste(
@@ -1883,7 +1850,6 @@ server <- function(input, output, session) {
     
     # Return something other than the promise so shiny remains responsive
     NULL
-
   })
   
   #####Split VCF to table##########################
@@ -2047,8 +2013,8 @@ server <- function(input, output, session) {
   ############################Compound Heterogyzous variant module##############################################
   compHet_content <- reactiveVal()
   
-  observeEvent(input$compHet_run, {
-    shinyjs::disable(input$compHet_run)
+  observeEvent(input$comp_run, {
+    shinyjs::disable(input$comp_run)
     prog <- Progress$new(session)
     prog$set(message = "Filtering compound heterozygous variants",
              detail = "Please do not refresh,This may take a while...",
@@ -2063,6 +2029,7 @@ server <- function(input, output, session) {
     else if (input$ped_rd == "Upload PED" && input$compHet_run) {
       compHet_peddb <- peddb_content()
     }
+    
     compHetCases <- reactive({
       return(input$compHetCases)
     })
@@ -2087,9 +2054,9 @@ server <- function(input, output, session) {
           "-p \"Phenotype=2\"",
           "-g \"HET\"",
           "-p \"Phenotype=3\"",
-          paste0('-g \"count(HOM_ALT) ==0\"'),
-          "-p \"Phenotype=3\"",
           paste0('-g \"count(HET) ==1\"'),
+          "-p \"Phenotype=3\"",
+          paste0('-g \"count(HOM_REF) ==1\"'),
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', compHetMAF_value, '\"'),
           ">",
@@ -2311,8 +2278,12 @@ server <- function(input, output, session) {
           paste0('-g \"count(UNKNOWN)<=', domDenovoCases_value, '\"'),
           "-p \"Phenotype=2\"",
           "-g \"HET\"",
-          "-p \"Phenotype=3\"",
-          "-g \"HOM_REF\"",
+          # "-p \"Phenotype=3\"",
+          # paste0(
+          #   '-g \"count(HOM_REF) ==',
+          #   domDenovo_ped_nCar$ncarriers,
+          #   '\"'
+          # ),
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', domDenovoMAF_value, '\"'),
           ">",
@@ -2500,7 +2471,6 @@ server <- function(input, output, session) {
   rec_denovo_content <- reactiveVal()
   
   observeEvent(input$rec_denovo_run, {
-    
     shinyjs::disable(input$rec_denovo_run)
     prog <- Progress$new(session)
     prog$set(message = "Recessive de novo Analysis in progress",
@@ -2544,7 +2514,11 @@ server <- function(input, output, session) {
           "-p \"Phenotype=2\"",
           "-g \"HOM_ALT\"",
           "-p \"Phenotype=3\"",
-          "-g \"HOM_REF\"",
+          paste0(
+            '-g \"count(HOM_REF) ==',
+            recDenovo_ped_nCar$ncarriers,
+            '\"'
+          ),
           "-p \"Phenotype=1\"",
           paste0('-g \"maf()<=', recDenovoMAF_value, '\"'),
           ">",
