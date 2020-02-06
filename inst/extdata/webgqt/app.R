@@ -52,7 +52,7 @@ sidebar <- dashboardSidebar(
       icon = icon("fas fa-file")
     ),
     menuItem(
-      "Pedigree analysis",
+      "Pedigree module",
       tabName = "pedigree_module",
       menuSubItem("Dominant", tabName = "dominantModel"),
       menuSubItem("Homozygous Recessive", tabName = "recessiveModel"),
@@ -61,13 +61,13 @@ sidebar <- dashboardSidebar(
       menuSubItem("Dominant De novo", tabName = "domdenovoModel")
     ),
     menuItem(
-      "Case-Control studies",
+      "Case-Control module",
       tabName = "cc_module",
       menuSubItem("Case-specific variants", tabName = "csModel"),
       menuSubItem("Shared variants in cases", tabName = "sharedModel")
     ),
     menuItem(
-      "Population studies",
+      "Population module",
       tabName = "pop_module",
       menuSubItem("Individual count", tabName = "popcountModel"),
       menuSubItem("Allele Frequency", tabName = "popModel"),

@@ -1,0 +1,63 @@
+---
+title: "Basic usage of webGQT package"
+author:
+- name: Meharji Arumilli
+  affiliation: 
+  - University of Helsinki
+  email: mehar.com@gmail.com
+
+date: "`r Sys.Date()`"
+package: wbeGQT
+output:   rmarkdown::html_document
+
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>")
+```
+
+```{r setup}
+library(webGQT)
+```
+
+# Abstract
+
+webGQT implements mendelian inheritance models to filter canidate disease-causing variants from large-scale genomic datasets stored in GQT index files.
+
+# Supported functionalities
+* allows user to define pedigree file
+* perform filtering by recessive, dominant, de novo inheritance models
+* compare SNPs by allele frequencies between population groups
+* perform case-control comparisons
+
+This package has two functions:
+
+1. To launch the server from personal computer
+
+```R
+# run_webgqt function to launch the server on personal computer
+run_webgqt <- function(gqt_path)
+```
+
+For example, if gqt is installed at /usr/local/bin/gqt, then the argument is given as:
+
+```R
+run_webgqt <- function(gqt_path = "/usr/local/gqt/bin/gqt")
+```
+
+2. A function to copy the installed package and dependencies to shiny package directory
+
+```R
+copy_shiny_gqt_app(copy_to)
+```
+An example value to the argument:
+```R
+copy_shiny_gqt_app(copy_to = '/srv/shiny-server/')
+```
+
