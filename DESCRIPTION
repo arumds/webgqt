@@ -2,10 +2,11 @@ Package: webGQT
 Type: Package
 Title: Webserver for Variant Filtering using Genotype Query Tools (GQT)
 Version: 0.1.0
-Authors@R: person("Meharji", "Arumilli", ,"meharji.arumilli@helsinki.fi",c("aut", "cre"))
-Maintainer: Meharji Arumilli <meharji.arumilli@helsinki.fi>
+Authors@R: person("Meharji", "Arumilli", ,"mehar.com@gmail.com",c("aut", "cre"))
+Maintainer: Meharji Arumilli <mehar.com@gmail.com>
 Description: webGQT is a shiny based web application of Genotype Query Tools (GQT) for querying large-scale genotype data converted into GQT database files.The application provides modules to filter based on Mendelian inheritance models.
 Encoding: UTF-8
+License: MIT + file LICENSE
 LazyData: true
 Imports:
   shiny,

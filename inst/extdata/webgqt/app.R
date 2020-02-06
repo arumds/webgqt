@@ -1,3 +1,10 @@
+## ==================================================================================== ##
+# webGQT Shiny App for genotype query tools for model based variant filtering
+# 
+# You may contact the author of this code, Meharji Arumilli, at <mehar.com@gmail.com>
+## ==================================================================================== ##
+
+
 ####load the required libraries########
 require(shiny)
 require(shinyjs)

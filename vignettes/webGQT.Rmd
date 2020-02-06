@@ -36,6 +36,23 @@ webGQT implements mendelian inheritance models to filter canidate disease-causin
 * compare SNPs by allele frequencies between population groups
 * perform case-control comparisons
 
+
+## Installation
+To install the latest development version from GitHub:
+
+```
+install.packages("devtools")
+devtools::install_github('arumds/webGQT')
+```
+
+## Usage
+
+We'll first load the package.
+
+```{r load-pkg, warning=FALSE, message=FALSE}
+library("webGQT")
+```
+
 This package has two functions:
 
 1. To launch the server from personal computer
